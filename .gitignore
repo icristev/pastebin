@@ -1,0 +1,10 @@
+minio-config/certs/
+.env
+alembic
+venv
+minio-data
+aws
+awscliv2.zip
+app/__pycache__
+app/utils/__pycache__
+.idea

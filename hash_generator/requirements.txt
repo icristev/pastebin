@@ -1,0 +1,6 @@
+redis
+sqlalchemy
+psycopg2
+alembic
+SQLAlchemy
+python-dotenv

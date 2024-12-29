@@ -1,0 +1,84 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    container_name: pastebin_app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgresql://admin:1111@db:5432/pastebin
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    volumes:
+      - .:/app
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - app-network
+
+  db:
+    image: postgres:17
+    container_name: pastebin_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 1111
+      POSTGRES_DB: pastebin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  redis:
+    image: redis:alpine
+    container_name: pastebin_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+
+  hash_generator:
+    build:
+      context: ./hash_generator
+    container_name: hash_generator
+    environment:
+      DATABASE_URL: postgresql://admin:1111@db:5432/pastebin
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./hash_generator:/app
+    networks:
+      - app-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"  # Порт для доступа к MinIO
+      - "9001:9001"  # Порт для панели управления
+    environment:
+      MINIO_ROOT_USER: accesskey123
+      MINIO_ROOT_PASSWORD: secretkey123
+    command: server /data --console-address ":9001"
+    volumes:
+      - ./minio-data:/data  # Локальная папка для данных MinIO
+      - ./minio-config:/root/.minio  # Локальная папка для конфигурации
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  app-network:
